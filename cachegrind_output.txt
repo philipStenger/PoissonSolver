@@ -1,0 +1,243 @@
+--------------------------------------------------------------------------------
+I1 cache:         65536 B, 64 B, 4-way associative
+D1 cache:         32768 B, 64 B, 8-way associative
+LL cache:         4194304 B, 64 B, 16-way associative
+Command:          ./poisson -n 51 -i 10
+Data file:        cachegrind.out.23168
+Events recorded:  Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Events shown:     Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Event sort order: Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Thresholds:       0.1 100 100 100 100 100 100 100 100
+Include dirs:     
+User annotated:   cachegrind.out.23295
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir         I1mr  ILmr  Dr         D1mr    DLmr   Dw        D1mw    DLmw   
+--------------------------------------------------------------------------------
+84,411,549 1,715 1,674 14,782,887 653,565 35,750 2,059,203 164,260 17,263  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir         I1mr ILmr Dr         D1mr    DLmr   Dw        D1mw    DLmw    file:function
+--------------------------------------------------------------------------------
+73,623,370    8    8 12,801,020 648,157 33,161 1,301,380 162,697 16,263  /home/rva47/ENCE464/Group18/poisson.c:poisson_dirichlet._omp_fn.0
+ 5,185,415  212  207    755,242   1,079      1     4,694     460     40  ???:???
+ 1,737,282   91   91    334,465      12     10   213,306       6      0  /build/glibc-SzIz7B/glibc-2.31/stdio-common/printf_fp.c:__printf_fp_l
+   814,112   31   31    223,686      13      6   145,657       4      0  /build/glibc-SzIz7B/glibc-2.31/stdio-common/vfprintf-internal.c:__vfprintf_internal
+   627,314    7    7    166,057       0      0    92,255       8      7  /build/glibc-SzIz7B/glibc-2.31/libio/fileops.c:_IO_file_overflow@@GLIBC_2.2.5
+   450,290    3    3    143,596       0      0    71,798       0      0  /build/glibc-SzIz7B/glibc-2.31/stdio-common/printf_fp.c:hack_digit
+   375,427    5    5     53,386       0      0    35,711       0      0  /build/glibc-SzIz7B/glibc-2.31/stdlib/../sysdeps/x86_64/mul_1.S:__mpn_mul_1
+   202,829    2    2     73,756       1      0    18,439       0      0  /build/glibc-SzIz7B/glibc-2.31/libio/genops.c:__overflow
+   197,880    4    4     47,379       0      0    36,822       1      0  /build/glibc-SzIz7B/glibc-2.31/libio/fileops.c:_IO_file_xsputn@@GLIBC_2.2.5
+   129,073    0    0          0       0      0         0       0      0  /build/glibc-SzIz7B/glibc-2.31/libio/libioP.h:__overflow
+   119,646    3    3     10,404       1      0         0       0      0  /build/glibc-SzIz7B/glibc-2.31/string/../sysdeps/x86_64/multiarch/strchr-avx2.S:__strchrnul_avx2
+    98,838    4    4     15,606       2      0    46,818       0      0  /build/glibc-SzIz7B/glibc-2.31/debug/printf_chk.c:__printf_chk
+
+--------------------------------------------------------------------------------
+-- User-annotated source: cachegrind.out.23295
+--------------------------------------------------------------------------------
+  No information has been collected for cachegrind.out.23295
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: /home/rva47/ENCE464/Group18/poisson.c
+--------------------------------------------------------------------------------
+         Ir   I1mr ILmr      Dr      D1mr   DLmr      Dw      D1mw   DLmw   
+
+-- line 46 ----------------------------------------
+         .    .    .         .       .      .         .       .      .   * @param n             The edge length of the cube. n^3 number of elements.
+         .    .    .         .       .      .         .       .      .   * @param source        Pointer to the source term cube, a.k.a. forcing function.
+         .    .    .         .       .      .         .       .      .   * @param iterations    Number of iterations to perform.
+         .    .    .         .       .      .         .       .      .   * @param threads       Number of threads to use for solving.
+         .    .    .         .       .      .         .       .      .   * @param delta         Grid spacing.
+         .    .    .         .       .      .         .       .      .   * @return double*      Solution to Poissons equation.  Caller must free.
+         .    .    .         .       .      .         .       .      .   */
+         .    .    .         .       .      .         .       .      .  double* poisson_dirichlet (int n, double *source, int iterations, int threads, double delta)
+        15    2    2         1       0      0        10       0      0  {
+         2    0    0         1       1      0         0       0      0      if (debug)
+         .    .    .         .       .      .         .       .      .      {
+         .    .    .         .       .      .         .       .      .          printf ("Starting solver with:\n"
+         .    .    .         .       .      .         .       .      .                 "n = %i\n"
+         .    .    .         .       .      .         .       .      .                 "iterations = %i\n"
+         .    .    .         .       .      .         .       .      .                 "threads = %i\n"
+         .    .    .         .       .      .         .       .      .                 "delta = %f\n",
+         .    .    .         .       .      .         .       .      .                 n, iterations, threads, delta);
+         .    .    .         .       .      .         .       .      .      }
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // Allocate some buffers to calculate the solution in
+        10    0    0         1       0      0         2       0      0      double *curr = (double*)calloc (n * n * n, sizeof (double));
+         4    1    1         0       0      0         1       0      0      double *next = (double*)calloc (n * n * n, sizeof (double));
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // Ensure we haven't run out of memory
+         5    0    0         1       0      0         0       0      0      if (curr == NULL || next == NULL)
+         .    .    .         .       .      .         .       .      .      {
+         .    .    .         .       .      .         .       .      .          fprintf (stderr, "Error: ran out of memory when trying to allocate %i sized cube\n", n);
+         .    .    .         .       .      .         .       .      .          exit (EXIT_FAILURE);
+         .    .    .         .       .      .         .       .      .      }
+         .    .    .         .       .      .         .       .      .  
+         2    0    0         0       0      0         1       0      0      double delta_squared = delta * delta; 
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // IMPLEMENTATION
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // collapse flattens the for loops into one big loop for better parallelization
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // Finite-Difference solver for Poisson's equation
+         .    .    .         .       .      .         .       .      .     
+        64    2    1        11       0      0         0       0      0      for (int iter = 0; iter < iterations; ++iter)
+         .    .    .         .       .      .         .       .      .      {
+     2,020    2    2     1,070     240      0       530       0      0          #pragma omp parallel for num_threads(threads) collapse(3) 
+         .    .    .         .       .      .         .       .      .          // Loop through the grid to update 'next' based on 'curr'
+         .    .    .         .       .      .         .       .      .          for (int k = 1; k < n; ++k)        
+         .    .    .         .       .      .         .       .      .          {
+         .    .    .         .       .      .         .       .      .              for (int j = 0; j < n; ++j)
+         .    .    .         .       .      .         .       .      .              {
+     1,760    1    1         0       0      0       160      70      6                  for (int i = 0; i < n; ++i)
+         .    .    .         .       .      .         .       .      .                  {
+ 7,803,640    2    2         0       0      0         0       0      0                      int index = i + n*j + n*n*k;
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .                      double next_voxel = 0;
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .                      // i-boundary conditions
+ 2,728,500    0    0    25,500     140      2         0       0      0                      if(i==0)        next_voxel += 2*curr[(i+1) + n*j + n*n*k];
+ 7,650,000    0    0 1,275,000      61      3         0       0      0                      else if(i==n-1) next_voxel += 2*curr[(i-1) + n*j + n*n*k];
+ 4,998,000    0    0 1,249,500   2,932     31         0       0      0                      else            next_voxel += curr[(i+1) + n*j + n*n*k] + curr[(i-1) + n*j + n*n*k];
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .                      // j-boundary conditions
+ 2,805,000    1    1    25,500   3,640     29         0       0      0                      if(j==0)        next_voxel += 2*curr[i + n*(j+1) + n*n*k];
+ 8,925,000    1    1 1,275,000     318     12         0       0      0                      else if(j==n-1) next_voxel += 2*curr[i + n*(j-1) + n*n*k];
+ 8,746,740    1    1 2,499,000 156,190  1,235       160       0      0                      else            next_voxel += curr[i + n*(j+1) + n*n*k] + curr[i + n*(j-1) + n*n*k];
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .                      // k-boundary condition                    
+ 7,906,520    1    1 1,300,500 162,632  1,611         0       0      0                      if(k==n-1) next_voxel += 2*curr[i + n*j + n*n*(k-1)];
+ 6,372,690    0    0 2,548,980 159,382 13,982        80       0      0                      else next_voxel += curr[i + n*j + n*n*(k+1)] + curr[i + n*j + n*n*(k-1)];
+         .    .    .         .       .      .         .       .      .  
+15,683,640    0    0 2,601,000 162,631 16,256 1,300,500 162,627 16,257                      next[index] = (1.0/6.0) * (next_voxel - delta_squared * source[index]);
+         .    .    .         .       .      .         .       .      .                  }
+         .    .    .         .       .      .         .       .      .              }
+         .    .    .         .       .      .         .       .      .          }
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .          // Synchronize 'curr' and 'next'
+         .    .    .         .       .      .         .       .      .          double *temp = curr;
+         .    .    .         .       .      .         .       .      .          curr = next;
+         .    .    .         .       .      .         .       .      .          next = temp;
+         .    .    .         .       .      .         .       .      .      }
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // Free one of the buffers and return the correct answer in the other.
+         .    .    .         .       .      .         .       .      .      // The caller is now responsible for free'ing the returned pointer.
+         2    0    0         0       0      0         1       0      0      free (next);
+         .    .    .         .       .      .         .       .      .  
+         2    0    0         1       1      0         0       0      0      if (debug)
+         .    .    .         .       .      .         .       .      .      {
+         .    .    .         .       .      .         .       .      .          printf ("Finished solving.\n");
+         .    .    .         .       .      .         .       .      .      }
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      return curr;
+        12    1    1         9       3      0         0       0      0  }
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .  int main (int argc, char **argv)
+         8    1    1         0       0      0         6       0      0  {
+         .    .    .         .       .      .         .       .      .      // Default settings for solver
+         5    0    0         0       0      0         1       0      0      uint16_t iterations = 100;
+        53    1    1        51       0      0         1       0      0      uint16_t n = 201;
+         1    0    0         0       0      0         1       0      0      uint8_t threads = 8;
+         .    .    .         .       .      .         .       .      .      double delta = 1;
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // parse the command line arguments
+         9    0    0         0       0      0         0       0      0      for (int i = 1; i < argc; ++i)
+         .    .    .         .       .      .         .       .      .      {
+        35    1    1        14       1      1         0       0      0          if (strcmp (argv[i], "-h") == 0 || strcmp (argv[i], "--help") == 0)
+         .    .    .         .       .      .         .       .      .          {
+         .    .    .         .       .      .         .       .      .              printf ("Usage: poisson [-n size] [-i iterations] [-t threads] [--debug]\n");
+         .    .    .         .       .      .         .       .      .              return EXIT_SUCCESS;
+         .    .    .         .       .      .         .       .      .          }
+         .    .    .         .       .      .         .       .      .  
+        10    0    0         3       0      0         0       0      0          if (strcmp (argv[i], "-n") == 0)
+         .    .    .         .       .      .         .       .      .          {
+         3    1    1         0       0      0         0       0      0              if (i == argc - 1)
+         .    .    .         .       .      .         .       .      .              {
+         .    .    .         .       .      .         .       .      .                  fprintf (stderr, "Error: expected size after -n!\n");
+         .    .    .         .       .      .         .       .      .                  return EXIT_FAILURE;
+         .    .    .         .       .      .         .       .      .              }
+         .    .    .         .       .      .         .       .      .  
+         4    0    0         1       0      0         1       0      0              n = atoi (argv[++i]);
+         .    .    .         .       .      .         .       .      .          }
+         .    .    .         .       .      .         .       .      .  
+         8    0    0         4       0      0         0       0      0          if (strcmp (argv[i], "-i") == 0)
+         .    .    .         .       .      .         .       .      .          {
+         2    0    0         0       0      0         0       0      0              if (i == argc - 1)
+         .    .    .         .       .      .         .       .      .              {
+         .    .    .         .       .      .         .       .      .                  fprintf (stderr, "Error: expected iterations after -i!\n");
+         .    .    .         .       .      .         .       .      .                  return EXIT_FAILURE;
+         .    .    .         .       .      .         .       .      .              }
+         .    .    .         .       .      .         .       .      .  
+         5    0    0         1       0      0         1       0      0              iterations = atoi (argv[++i]);
+         .    .    .         .       .      .         .       .      .          }
+         .    .    .         .       .      .         .       .      .  
+         4    1    1         2       0      0         0       0      0          if (strcmp (argv[i], "-t") == 0)
+         .    .    .         .       .      .         .       .      .          {
+         .    .    .         .       .      .         .       .      .              if (i == argc - 1)
+         .    .    .         .       .      .         .       .      .              {
+         .    .    .         .       .      .         .       .      .                  fprintf (stderr, "Error: expected threads after -t!\n");
+         .    .    .         .       .      .         .       .      .                  return EXIT_FAILURE;
+         .    .    .         .       .      .         .       .      .              }
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .              threads = atoi (argv[++i]);
+         .    .    .         .       .      .         .       .      .          }
+         .    .    .         .       .      .         .       .      .  
+        16    1    1         4       0      0         0       0      0          if (strcmp (argv[i], "--debug") == 0)
+         .    .    .         .       .      .         .       .      .          {
+         .    .    .         .       .      .         .       .      .              debug = true;
+         .    .    .         .       .      .         .       .      .          }
+         .    .    .         .       .      .         .       .      .      }
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // Ensure we have an odd sized cube
+         2    1    1         1       0      0         0       0      0      if (n % 2 == 0)
+         .    .    .         .       .      .         .       .      .      {
+         .    .    .         .       .      .         .       .      .          fprintf (stderr, "Error: n should be an odd number!\n");
+         .    .    .         .       .      .         .       .      .          return EXIT_FAILURE;
+         .    .    .         .       .      .         .       .      .      }
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // // Create a source term with a single point in the centre
+         8    0    0         1       0      0         2       0      0       double *source = (double*)calloc (n * n * n, sizeof (double));
+         2    1    1         0       0      0         0       0      0      if (source == NULL)
+         .    .    .         .       .      .         .       .      .      {
+         .    .    .         .       .      .         .       .      .          fprintf (stderr, "Error: failed to allocated source term (n=%i)\n", n);
+         .    .    .         .       .      .         .       .      .          return EXIT_FAILURE;
+         .    .    .         .       .      .         .       .      .      }
+         .    .    .         .       .      .         .       .      .  
+         5    0    0         2       1      1         1       1      1      source[(n * n * n) / 2] = 1;
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // Calculate the resulting field with Dirichlet conditions
+         6    1    1         2       0      0         2       0      0      double *result = poisson_dirichlet (n, source, iterations, threads, delta);
+         .    .    .         .       .      .         .       .      .  
+         .    .    .         .       .      .         .       .      .      // Print out the middle slice of the cube for validation
+       205    0    0        51       0      0         0       0      0      for (int x = 0; x < n; ++x)
+         .    .    .         .       .      .         .       .      .      {
+     7,905    0    0         0       0      0         0       0      0          for (int y = 0; y < n; ++y)
+         .    .    .         .       .      .         .       .      .          {
+        11    0    0         1       1      0         1       0      0              printf ("%0.5f ", result[((n / 2) * n + y) * n + x]);
+         .    .    .         .       .      .         .       .      .          }
+         .    .    .         .       .      .         .       .      .          printf ("\r\n");
+         .    .    .         .       .      .         .       .      .      }
+         .    .    .         .       .      .         .       .      .  
+         2    0    0         1       0      0         1       0      0      free (source);
+         2    1    1         1       0      0         1       0      0      free (result);
+         .    .    .         .       .      .         .       .      .  
+         2    0    0         0       0      0         0       0      0      return EXIT_SUCCESS;
+         8    0    0         7       1      0         0       0      0  }
+--------------------------------------------------------------------------------
+The following files chosen for auto-annotation could not be found:
+--------------------------------------------------------------------------------
+  /build/glibc-SzIz7B/glibc-2.31/debug/printf_chk.c
+  /build/glibc-SzIz7B/glibc-2.31/libio/fileops.c
+  /build/glibc-SzIz7B/glibc-2.31/libio/genops.c
+  /build/glibc-SzIz7B/glibc-2.31/libio/libioP.h
+  /build/glibc-SzIz7B/glibc-2.31/stdio-common/printf_fp.c
+  /build/glibc-SzIz7B/glibc-2.31/stdio-common/vfprintf-internal.c
+  /build/glibc-SzIz7B/glibc-2.31/stdlib/../sysdeps/x86_64/mul_1.S
+  /build/glibc-SzIz7B/glibc-2.31/string/../sysdeps/x86_64/multiarch/strchr-avx2.S
+
+--------------------------------------------------------------------------------
+Ir         I1mr ILmr Dr         D1mr    DLmr   Dw        D1mw    DLmw   
+--------------------------------------------------------------------------------
+73,631,949   25   24 12,801,222 648,175 33,163 1,301,464 162,698 16,264  events annotated
+

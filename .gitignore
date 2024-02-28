@@ -1,0 +1,12 @@
+poisson
+poisson.s
+threads
+
+*.aux
+*.log
+*.out
+cachegrind.out.*
+
+_minted-*/
+.vscode/
+poisson_profile

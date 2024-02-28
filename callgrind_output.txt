@@ -1,0 +1,248 @@
+--------------------------------------------------------------------------------
+Profile data file 'callgrind.out.24970' (creator: callgrind-3.15.0)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 29660761
+Trigger: Program termination
+Profiled target:  ./poisson -n 51 -i 10 (PID 24970, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir          
+--------------------------------------------------------------------------------
+121,523,101  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir          file:function
+--------------------------------------------------------------------------------
+73,623,370  poisson.c:poisson_dirichlet._omp_fn.0 [/home/rva47/ENCE464/Group18/poisson]
+28,319,012  ???:0x000000000001d1e0 [/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0]
+13,933,866  ???:0x000000000001d440 [/usr/lib/x86_64-linux-gnu/libgomp.so.1.0.0]
+ 1,737,282  /build/glibc-SzIz7B/glibc-2.31/stdio-common/printf_fp.c:__printf_fp_l [/usr/lib/x86_64-linux-gnu/libc-2.31.so]
+   814,112  /build/glibc-SzIz7B/glibc-2.31/stdio-common/vfprintf-internal.c:__vfprintf_internal [/usr/lib/x86_64-linux-gnu/libc-2.31.so]
+   627,314  /build/glibc-SzIz7B/glibc-2.31/libio/fileops.c:_IO_file_overflow@@GLIBC_2.2.5 [/usr/lib/x86_64-linux-gnu/libc-2.31.so]
+   450,290  /build/glibc-SzIz7B/glibc-2.31/stdio-common/printf_fp.c:hack_digit [/usr/lib/x86_64-linux-gnu/libc-2.31.so]
+   375,427  /build/glibc-SzIz7B/glibc-2.31/stdlib/../sysdeps/x86_64/mul_1.S:__mpn_mul_1 [/usr/lib/x86_64-linux-gnu/libc-2.31.so]
+   202,829  /build/glibc-SzIz7B/glibc-2.31/libio/genops.c:__overflow [/usr/lib/x86_64-linux-gnu/libc-2.31.so]
+   197,880  /build/glibc-SzIz7B/glibc-2.31/libio/fileops.c:_IO_file_xsputn@@GLIBC_2.2.5 [/usr/lib/x86_64-linux-gnu/libc-2.31.so]
+   129,073  /build/glibc-SzIz7B/glibc-2.31/libio/libioP.h:__overflow
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: poisson.c
+--------------------------------------------------------------------------------
+Ir         
+
+-- line 46 ----------------------------------------
+         .   * @param n             The edge length of the cube. n^3 number of elements.
+         .   * @param source        Pointer to the source term cube, a.k.a. forcing function.
+         .   * @param iterations    Number of iterations to perform.
+         .   * @param threads       Number of threads to use for solving.
+         .   * @param delta         Grid spacing.
+         .   * @return double*      Solution to Poissons equation.  Caller must free.
+         .   */
+         .  double* poisson_dirichlet (int n, double *source, int iterations, int threads, double delta)
+        15  {
+         2      if (debug)
+         .      {
+         .          printf ("Starting solver with:\n"
+         .                 "n = %i\n"
+         .                 "iterations = %i\n"
+         .                 "threads = %i\n"
+         .                 "delta = %f\n",
+         .                 n, iterations, threads, delta);
+         .      }
+         .  
+         .      // Allocate some buffers to calculate the solution in
+        10      double *curr = (double*)calloc (n * n * n, sizeof (double));
+       287  => ???:0x0000000000109140 (1x)
+         4      double *next = (double*)calloc (n * n * n, sizeof (double));
+       287  => ???:0x0000000000109140 (1x)
+         .  
+         .      // Ensure we haven't run out of memory
+         5      if (curr == NULL || next == NULL)
+         .      {
+         .          fprintf (stderr, "Error: ran out of memory when trying to allocate %i sized cube\n", n);
+         .          exit (EXIT_FAILURE);
+         .      }
+         .  
+         2      double delta_squared = delta * delta; 
+         .  
+         .      // IMPLEMENTATION
+         .  
+         .      // collapse flattens the for loops into one big loop for better parallelization
+         .  
+         .      // Finite-Difference solver for Poisson's equation
+         .     
+        64      for (int iter = 0; iter < iterations; ++iter)
+         .      {
+     2,020          #pragma omp parallel for num_threads(threads) collapse(3) 
+12,900,298  => ???:0x00000000001091b0 (10x)
+         .          // Loop through the grid to update 'next' based on 'curr'
+         .          for (int k = 1; k < n; ++k)        
+         .          {
+         .              for (int j = 0; j < n; ++j)
+         .              {
+     1,760                  for (int i = 0; i < n; ++i)
+       800  => ???:0x0000000000109150 (80x)
+       480  => ???:0x0000000000109120 (80x)
+         .                  {
+ 7,803,640                      int index = i + n*j + n*n*k;
+         .  
+         .                      double next_voxel = 0;
+         .  
+         .                      // i-boundary conditions
+ 2,728,500                      if(i==0)        next_voxel += 2*curr[(i+1) + n*j + n*n*k];
+ 7,650,000                      else if(i==n-1) next_voxel += 2*curr[(i-1) + n*j + n*n*k];
+ 4,998,000                      else            next_voxel += curr[(i+1) + n*j + n*n*k] + curr[(i-1) + n*j + n*n*k];
+         .  
+         .                      // j-boundary conditions
+ 2,805,000                      if(j==0)        next_voxel += 2*curr[i + n*(j+1) + n*n*k];
+ 8,925,000                      else if(j==n-1) next_voxel += 2*curr[i + n*(j-1) + n*n*k];
+ 8,746,740                      else            next_voxel += curr[i + n*(j+1) + n*n*k] + curr[i + n*(j-1) + n*n*k];
+         .  
+         .                      // k-boundary condition                    
+ 7,906,520                      if(k==n-1) next_voxel += 2*curr[i + n*j + n*n*(k-1)];
+ 6,372,690                      else next_voxel += curr[i + n*j + n*n*(k+1)] + curr[i + n*j + n*n*(k-1)];
+         .  
+15,683,640                      next[index] = (1.0/6.0) * (next_voxel - delta_squared * source[index]);
+         .                  }
+         .              }
+         .          }
+         .  
+         .          // Synchronize 'curr' and 'next'
+         .          double *temp = curr;
+         .          curr = next;
+         .          next = temp;
+         .      }
+         .  
+         .      // Free one of the buffers and return the correct answer in the other.
+         .      // The caller is now responsible for free'ing the returned pointer.
+         2      free (next);
+        73  => ???:0x0000000000109100 (1x)
+         .  
+         2      if (debug)
+         .      {
+         .          printf ("Finished solving.\n");
+         .      }
+         .  
+         .      return curr;
+        12  }
+         .  
+         .  int main (int argc, char **argv)
+         8  {
+         .      // Default settings for solver
+         5      uint16_t iterations = 100;
+        53      uint16_t n = 201;
+         1      uint8_t threads = 8;
+         .      double delta = 1;
+         .  
+         .      // parse the command line arguments
+         9      for (int i = 1; i < argc; ++i)
+         .      {
+        35          if (strcmp (argv[i], "-h") == 0 || strcmp (argv[i], "--help") == 0)
+         .          {
+         .              printf ("Usage: poisson [-n size] [-i iterations] [-t threads] [--debug]\n");
+         .              return EXIT_SUCCESS;
+         .          }
+         .  
+        10          if (strcmp (argv[i], "-n") == 0)
+         .          {
+         3              if (i == argc - 1)
+         .              {
+         .                  fprintf (stderr, "Error: expected size after -n!\n");
+         .                  return EXIT_FAILURE;
+         .              }
+         .  
+         4              n = atoi (argv[++i]);
+         .          }
+         .  
+         8          if (strcmp (argv[i], "-i") == 0)
+         .          {
+         2              if (i == argc - 1)
+         .              {
+         .                  fprintf (stderr, "Error: expected iterations after -i!\n");
+         .                  return EXIT_FAILURE;
+         .              }
+         .  
+         5              iterations = atoi (argv[++i]);
+         .          }
+         .  
+         4          if (strcmp (argv[i], "-t") == 0)
+         .          {
+         .              if (i == argc - 1)
+         .              {
+         .                  fprintf (stderr, "Error: expected threads after -t!\n");
+         .                  return EXIT_FAILURE;
+         .              }
+         .  
+         .              threads = atoi (argv[++i]);
+         .          }
+         .  
+        16          if (strcmp (argv[i], "--debug") == 0)
+         .          {
+         .              debug = true;
+         .          }
+         .      }
+         .  
+         .      // Ensure we have an odd sized cube
+         2      if (n % 2 == 0)
+         .      {
+         .          fprintf (stderr, "Error: n should be an odd number!\n");
+         .          return EXIT_FAILURE;
+         .      }
+         .  
+         .      // // Create a source term with a single point in the centre
+         8       double *source = (double*)calloc (n * n * n, sizeof (double));
+       287  => ???:0x0000000000109140 (1x)
+         2      if (source == NULL)
+         .      {
+         .          fprintf (stderr, "Error: failed to allocated source term (n=%i)\n", n);
+         .          return EXIT_FAILURE;
+         .      }
+         .  
+         5      source[(n * n * n) / 2] = 1;
+         .  
+         .      // Calculate the resulting field with Dirichlet conditions
+         6      double *result = poisson_dirichlet (n, source, iterations, threads, delta);
+12,901,203  => poisson.c:poisson_dirichlet (1x)
+         .  
+         .      // Print out the middle slice of the cube for validation
+       205      for (int x = 0; x < n; ++x)
+         .      {
+     7,905          for (int y = 0; y < n; ++y)
+         .          {
+        11              printf ("%0.5f ", result[((n / 2) * n + y) * n + x]);
+         .          }
+         .          printf ("\r\n");
+         .      }
+         .  
+         2      free (source);
+        73  => ???:0x0000000000109100 (1x)
+         2      free (result);
+        73  => ???:0x0000000000109100 (1x)
+         .  
+         2      return EXIT_SUCCESS;
+         8  }
+--------------------------------------------------------------------------------
+The following files chosen for auto-annotation could not be found:
+--------------------------------------------------------------------------------
+  /build/glibc-SzIz7B/glibc-2.31/libio/fileops.c
+  /build/glibc-SzIz7B/glibc-2.31/libio/genops.c
+  /build/glibc-SzIz7B/glibc-2.31/libio/libioP.h
+  /build/glibc-SzIz7B/glibc-2.31/stdio-common/printf_fp.c
+  /build/glibc-SzIz7B/glibc-2.31/stdio-common/vfprintf-internal.c
+  /build/glibc-SzIz7B/glibc-2.31/stdlib/../sysdeps/x86_64/mul_1.S
+
+--------------------------------------------------------------------------------
+Ir         
+--------------------------------------------------------------------------------
+73,631,949  events annotated
+

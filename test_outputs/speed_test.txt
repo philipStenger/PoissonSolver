@@ -1,0 +1,9 @@
+i: 100,	t: 8,	n: 101,	opt: -Ofast	==> 000.083946 seconds
+i: 100,	t: 8,	n: 201,	opt: -Ofast	==> 000.391569 seconds
+i: 100,	t: 8,	n: 301,	opt: -Ofast	==> 001.274539 seconds
+i: 100,	t: 8,	n: 401,	opt: -Ofast	==> 003.115466 seconds
+i: 100,	t: 8,	n: 501,	opt: -Ofast	==> 007.786423 seconds
+i: 100,	t: 8,	n: 601,	opt: -Ofast	==> 013.983035 seconds
+i: 100,	t: 8,	n: 701,	opt: -Ofast	==> 022.719477 seconds
+i: 100,	t: 8,	n: 801,	opt: -Ofast	==> 033.989426 seconds
+i: 100,	t: 8,	n: 901,	opt: -Ofast	==> 049.058530 seconds

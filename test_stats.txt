@@ -1,0 +1,5 @@
+Computer            Domain          Itterations         Time [s]        Comments
+Reubens Laptop      101             100                 4.21            Base program
+Reubens Laptop      101             100                 3.38            doubles changed to floats
+Lab PC              101             100                 1.64            same code as above
+Lab PC              101             100                 1.51            made delta^2 and 1/6 constants
